@@ -1,0 +1,41 @@
+--Calculate the total number of pageviews for each page
+
+SELECT page_path, COUNT(*) AS pageviews
+FROM web_traffic
+GROUP BY page_path
+ORDER BY pageviews DESC;
+
+--Calculate the bounce rate for each page
+
+SELECT page_path, COUNT(*) AS pageviews, COUNT(CASE WHEN session_duration_seconds = 0 THEN 1 ELSE NULL END) / COUNT(*) AS bounce_rate
+FROM web_traffic
+GROUP BY page_path
+ORDER BY bounce_rate DESC;
+
+--Calculate the average time spent on each page
+
+SELECT page_path, AVG(session_duration_seconds) AS avg_time_on_page
+FROM web_traffic
+GROUP BY page_path
+ORDER BY avg_time_on_page DESC;
+
+--Identify the most common paths that users take through the website
+
+WITH path_cte AS (
+  SELECT 
+    CONCAT(page_path, ' > ', LEAD(page_path) OVER (ORDER BY session_start_time)) AS path, 
+    COUNT(*) AS path_count
+  FROM web_traffic
+  WHERE page_path != '/'
+  GROUP BY CONCAT(page_path, ' > ', LEAD(page_path) OVER (ORDER BY session_start_time))
+)
+SELECT path, path_count
+FROM path_cte
+ORDER BY path_count DESC;
+
+--Identify the most common devices and browsers used by users
+
+SELECT device_category, browser, COUNT(*) AS device_count
+FROM web_traffic
+GROUP BY device_category, browser
+ORDER BY device_count DESC;
